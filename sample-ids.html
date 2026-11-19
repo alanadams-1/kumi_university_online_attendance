@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2f6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sample Student IDs</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--ink:#14213d;--muted:#5b6478;--line:#d5dbe6;--surface:#fff;--accent:#2446d8;--accent-ink:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--surface:#18203a;--accent:#6c8cff;--accent-ink:#0f1524;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1524;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--surface:#18203a;--accent:#6c8cff;--accent-ink:#0f1524;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+main{max-width:620px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;font-weight:800;margin:4px 0 2px}
+.sub{color:var(--muted);margin:0 0 16px}
+.add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.add input,.add select{flex:1 1 150px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+.add button{font:inherit;font-weight:600;padding:11px 16px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.id{background:#fff;color:#14213d;border-radius:14px;overflow:hidden;border:1px solid #c9d1e0;max-width:340px;width:100%}
+.id header{background:#1c2f6b;color:#fff;padding:10px 14px;font-weight:800;font-size:.95rem}
+.body{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;align-items:center;padding:14px}
+.qr{width:180px;height:180px;flex:none}
+.qr svg{width:100%;height:100%;display:block}
+.name{font-weight:800;font-size:1.05rem;margin:0}
+.dept{margin:2px 0 8px;color:#5b6478;font-size:.9rem}
+.reg{font-weight:600;font-size:.95rem;letter-spacing:.02em}
+.foot{border-top:1px solid #e3e8f2;padding:6px 14px;font-size:.75rem;color:#5b6478}
+@media print{body{background:#fff}.add,.sub,h1{display:none}.id{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+  <p style="margin:0 0 6px"><a href="index.html" style="color:var(--accent);font-weight:600;text-decoration:none">&larr; Home</a></p>
+  <h1>Sample student IDs</h1>
+  <p class="sub">Open this on a laptop or second screen and scan the QR codes with the scanner page. You can also print it.</p>
+  <form class="add" id="addForm" onsubmit="return false">
+    <input type="text" id="n" placeholder="Student name" aria-label="Student name">
+    <input type="text" id="r" placeholder="Registration number" aria-label="Registration number">
+    <input type="text" id="c" placeholder="Course" aria-label="Course">
+    <select id="s" aria-label="Sex"><option>Female</option><option>Male</option></select>
+    <button type="button" id="addBtn">Add ID card</button>
+  </form>
+  <div class="cards" id="cards"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  var students=[
+    {n:"Amina Yusuf",r:"CSC/2024/001",d:"Computer Science",s:"Female"},
+    {n:"Daniel Okoro",r:"CSC/2024/002",d:"Computer Science",s:"Male"},
+    {n:"Grace Mensah",r:"ENG/2023/117",d:"Engineering",s:"Female"},
+    {n:"Samuel Banda",r:"BUS/2024/045",d:"Business Studies",s:"Male"},
+    {n:"Esther Akello",r:"CSC/2024/003",d:"Computer Science",s:"Female"},
+    {n:"Brian Opio",r:"BIT/2025/011",d:"BSC-IT",s:"Male"},
+    {n:"Sarah Namukasa",r:"BIT/2025/012",d:"BSC-IT",s:"Female"},
+    {n:"Moses Okello",r:"AGR/2024/030",d:"Agriculture",s:"Male"},
+    {n:"Joan Atim",r:"EDU/2023/088",d:"Education",s:"Female"},
+    {n:"Peter Ssemwogerere",r:"BUS/2024/046",d:"Business Studies",s:"Male"}
+  ];
+  var box=document.getElementById("cards");
+  function card(s){
+    var qr=qrcode(0,"M");qr.addData(JSON.stringify({name:s.n,reg:s.r,course:s.d||"",sex:s.s||""}));qr.make();
+    var el=document.createElement("article");el.className="id";
+    el.innerHTML='<header>University Student ID</header><div class="body"><div class="qr"></div><div><p class="name"></p><p class="dept"></p><span class="reg"></span></div></div><div class="foot">Sample card for testing only</div>';
+    el.querySelector(".qr").innerHTML=qr.createSvgTag({cellSize:4,margin:2,scalable:true});
+    el.querySelector(".name").textContent=s.n;
+    el.querySelector(".dept").textContent=(s.d||"Student")+(s.s?", "+s.s:"");
+    el.querySelector(".reg").textContent=s.r;
+    box.appendChild(el);
+  }
+  students.forEach(card);
+  document.getElementById("addBtn").onclick=function(){
+    var n=document.getElementById("n"),r=document.getElementById("r");
+    if(!n.value.trim()||!r.value.trim()){return}
+    card({n:n.value.trim(),r:r.value.trim(),d:document.getElementById("c").value.trim(),s:document.getElementById("s").value});document.getElementById("c").value="";n.value="";r.value="";
+  };
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2f6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ID Card Maker</title>
+<script>
+(function(){var ok=false;try{var a=JSON.parse(localStorage.getItem("attendance:auth")||"{}"),c=JSON.parse(localStorage.getItem("attendance:cfg")||"{}");ok=!!(a.name&&c.pin)}catch(e){}if(!ok){location.replace("index.html")}})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--ink:#14213d;--muted:#5b6478;--line:#d5dbe6;--accent:#2446d8;--accent-ink:#fff;--ok:#1f8a5b;--bad:#c23b3b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--ok:#4cc38a;--bad:#ff7b7b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--ok:#4cc38a;--bad:#ff7b7b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+main{max-width:1000px;margin:0 auto;padding:16px}
+a.back{color:var(--accent);font-weight:600;text-decoration:none}
+h1{font-size:1.5rem;font-weight:800;margin:6px 0 2px}
+.sub{color:var(--muted);margin:0 0 14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.panel h2{margin:0 0 10px;font-size:1.05rem}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+textarea,select,input[type=text],input[type=file]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+textarea{min-height:130px;font-family:ui-monospace,Consolas,monospace;font-size:.85rem}
+#addr{min-height:80px;font-family:inherit;font-size:.95rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600}
+.chk input{width:auto}
+button{font:inherit;font-weight:600;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#status{margin:10px 0 0;font-size:.95rem;color:var(--muted)}
+#status.ok{color:var(--ok)}#status.err{color:var(--bad)}
+.note{font-size:.88rem;color:var(--muted);margin:10px 0 0}
+[hidden]{display:none!important}
+
+/* ---- the cards (real size: 85.6 x 54 mm) ---- */
+.sheet{display:grid;gap:4mm}
+.pair{display:flex;flex-wrap:wrap;gap:4mm}
+.card{position:relative;width:85.6mm;height:54mm;flex:none;background:#fff;border:.3mm solid #b9c3d9;border-radius:3.2mm;overflow:hidden;color:#3a2a2f;font-family:Arial,Helvetica,sans-serif}
+.card div{position:absolute}
+.card::before{content:"";position:absolute;inset:0;display:none;background-image:var(--logo),var(--logo);background-size:12mm 12mm,12mm 12mm;background-position:0 0,6mm 6mm;background-repeat:repeat;opacity:.09}
+.card.pat::before{display:block}
+.lg{left:3mm;top:3.4mm;width:14mm;height:14mm;background:var(--logo) center/contain no-repeat}
+.bt,.bb{left:0;right:0;height:2.2mm;background:#3f8fe0}
+.bt{top:0}.bb{bottom:0}
+.inst{left:19mm;right:2mm;top:4.4mm;text-align:center;font-weight:800;color:#1f6fb8;white-space:nowrap}
+.ctitle{left:19mm;right:2mm;top:11.8mm;text-align:center;font-weight:700;font-size:7.6pt;color:#e23a4a}
+.card.nologo .inst,.card.nologo .ctitle{left:0;right:0}
+.rule{left:2mm;right:2mm;top:19.6mm;height:.28mm;background:#1f6fb8}
+.photo{left:3.5mm;top:25mm;width:19mm;height:24mm;background:#e9edf3;border:.25mm solid #cfd6e0;border-radius:1.5mm;overflow:hidden;text-align:center;font-size:4.5pt;color:#7a8699}
+.photo::before{content:"";position:absolute;left:50%;top:6mm;width:8.8mm;height:8.8mm;margin-left:-4.4mm;border-radius:50%;background:#b6c0cf}
+.photo::after{content:"";position:absolute;left:2mm;right:2mm;top:15mm;height:18mm;border-radius:50%;background:#b6c0cf}
+.photo span{position:absolute;left:0;right:0;bottom:.8mm;z-index:2}
+.f{white-space:nowrap}
+.fv{overflow:hidden;text-overflow:ellipsis}
+.fl{font-weight:700;font-size:5.1pt;color:#3a2a2f;line-height:2.1mm}
+.fv{font-weight:700;font-size:6.1pt;color:#1f6fb8;line-height:2.7mm}
+.wm{left:0;right:0;top:19mm;text-align:center;font-weight:800;font-size:34pt;color:rgba(226,58,74,.13);transform:rotate(20deg);pointer-events:none}
+.sn{left:0;right:0;bottom:.3mm;height:1.6mm;line-height:1.6mm;text-align:center;color:#fff;font-weight:700;font-size:4.4pt}
+.bandtop{left:0;right:0;top:0;height:14mm;background:#3f8fe0;color:#fff;text-align:center}
+.bandtop .l1{position:absolute;left:0;right:0;top:3.4mm;font-weight:700;font-size:7pt}
+.bandtop .l2{position:absolute;left:0;right:0;top:8.2mm;font-style:italic;font-size:5.6pt}
+.qrbox{left:4mm;top:18.5mm;width:31mm;height:31mm;background:#fff}
+.qrbox svg{width:100%;height:100%;display:block}
+.addr{left:39mm;top:16.6mm;width:44mm;font-weight:700;font-size:6.3pt;line-height:3.6mm}
+.scan{left:39mm;width:44mm;font-weight:700;font-size:6.3pt;color:#1f6fb8;line-height:3.2mm}
+.found{left:39mm;bottom:2.8mm;width:44mm;font-size:5.4pt}
+
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  .noprint{display:none!important}
+  main{padding:0;max-width:none}
+  .pair{flex-wrap:nowrap;break-inside:avoid}
+  .card{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="noprint">
+    <a class="back" href="index.html">&larr; Home</a>
+    <h1>ID card maker</h1>
+    <p class="sub">Turn a student list into printable ID cards with a QR code on the back. Everything happens in your browser, and no student data is uploaded anywhere.</p>
+
+    <div class="panel">
+      <h2>1. Paste your student list</h2>
+      <label for="data">One student per line</label>
+      <textarea id="data" placeholder="Surname, Given name, Sex, Registration number, Faculty, Course, Card number (optional)&#10;YUSUF, AMINA, F, 25/U/08/011/BScCS/FT, SCIE &amp; TECH, BScCS"></textarea>
+      <p class="note">Columns, in this order: Surname, Given name, Sex (M or F), Registration number, Faculty, Course and, if you have it, Card number. You can paste straight from Excel or Google Sheets, or load a CSV file.</p>
+      <div class="row"><div style="flex:1 1 240px"><label for="file">Or choose a CSV file</label><input type="file" id="file" accept=".csv,.txt,text/csv,text/plain"></div></div>
+    </div>
+
+    <div class="panel">
+      <h2>2. Card settings</h2>
+      <div class="grid">
+        <div><label for="inst">University name</label><input type="text" id="inst" value="Kumi University"></div>
+        <div><label for="motto">Motto (optional)</label><input type="text" id="motto" value="Godliness &amp; Excellence for servanthood"></div>
+        <div><label for="nat">Nationality</label><input type="text" id="nat" value="UGA"></div>
+        <div><label for="issue">Date of issue</label><input type="text" id="issue"></div>
+        <div><label for="expiry">Expiry date</label><input type="text" id="expiry"></div>
+        <div><label for="logoFile">University logo (optional)</label><input type="file" id="logoFile" accept="image/*"><p class="note" id="logoName" style="margin:4px 0 0">Using the Kumi University logo. <a href="#" id="logoReset" style="color:var(--accent);font-weight:600">Reset</a></p></div>
+        <div><label for="layout">Print layout</label><select id="layout"><option value="both">Front and back</option><option value="back">Back only (QR side)</option></select></div>
+      </div>
+      <div style="margin-top:12px"><label for="addr">Address lines for the back of the card</label>
+        <textarea id="addr">P.O. Box 178, Kumi (U)
+Tel: +256 392 001 391
+Email: ar@kumiuniversity.ac.ug
+Website: www.kumiuniversity.ac.ug</textarea></div>
+      <div class="row"><label class="chk"><input type="checkbox" id="showLogo" checked> Show the logo on the front</label><label class="chk"><input type="checkbox" id="usePattern" checked> Logo background pattern</label></div>
+      <div class="row"><label class="chk"><input type="checkbox" id="sample" checked> Mark cards as SAMPLE (untick only for approved, real cards)</label></div>
+      <p class="note">This tool lays out the card and its QR code. Photos, signatures and the final card printing stay with the university's ID office.</p>
+    </div>
+
+    <div class="row" style="margin-top:0">
+      <button class="primary" id="make">3. Make the cards</button>
+      <button id="load">Load sample list</button>
+      <button id="print" hidden>4. Print or save as PDF</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+  </div>
+  <div class="sheet" id="sheet"></div>
+</main>
+
+<script>
+(function(){
+  function load(urls,test){
+    var i=0;
+    (function next(){
+      if(test()||i>=urls.length){return}
+      var s=document.createElement("script");
+      s.src=urls[i++];
+      s.onload=function(){if(!test()){next()}};
+      s.onerror=next;
+      document.head.appendChild(s);
+    })();
+  }
+  load(["https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js","https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js","https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"],function(){return typeof window.qrcode==="function"});
+})();
+</script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var LOGO_DEFAULT="kumi-logo.png",logoSrc=LOGO_DEFAULT;
+  var SAMPLE="Surname,Given name,Sex,Registration number,Faculty,Course\nYUSUF,AMINA,F,25/U/08/011/BScCS/FT,SCIE & TECH,BScCS\nOKORO,DANIEL,M,25/U/08/012/BScCS/FT,SCIE & TECH,BScCS\nMENSAH,GRACE,F,24/U/08/045/BScEng/FT,ENGINEERING,BScEng\nBANDA,SAMUEL,M,24/U/05/021/BBA/FT,BUSINESS,BBA";
+
+  function pad(n){return (n<10?"0":"")+n}
+  function dstr(d){return pad(d.getDate())+"."+pad(d.getMonth()+1)+"."+d.getFullYear()}
+  var today=new Date(),exp=new Date(today.getFullYear()+3,11,31);
+  $("issue").value=dstr(today);$("expiry").value=dstr(exp);
+
+  function say(msg,kind){var s=$("status");s.textContent=msg;s.className=kind||""}
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls){e.className=cls}if(text!=null){e.textContent=text}return e}
+  function splitLine(line,d){
+    var out=[],cur="",q=false;
+    for(var i=0;i<line.length;i++){
+      var ch=line[i];
+      if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++}else{q=false}}else{cur+=ch}}
+      else if(ch==='"'){q=true}
+      else if(ch===d){out.push(cur);cur=""}
+      else{cur+=ch}
+    }
+    out.push(cur);
+    return out.map(function(s){return s.trim()});
+  }
+  function parse(text){
+    var lines=String(text).replace(/\r/g,"").split("\n").filter(function(l){return l.trim()});
+    if(!lines.length){return []}
+    var f=lines[0],d=f.indexOf("\t")>-1?"\t":(f.split(";").length>f.split(",").length?";":",");
+    var rows=lines.map(function(l){return splitLine(l,d)});
+    if(/surname/i.test(rows[0][0]||"")||/reg/i.test(rows[0][3]||"")){rows.shift()}
+    return rows;
+  }
+  function title(s){return String(s).toLowerCase().replace(/(^|[\s'-])([a-z])/g,function(m,a,b){return a+b.toUpperCase()})}
+  function qrSvg(data){
+    var q=qrcode(0,"M");q.addData(data);q.make();
+    var n=q.getModuleCount(),m=2,t=n+2*m,p="";
+    for(var r=0;r<n;r++){for(var c=0;c<n;c++){if(q.isDark(r,c)){p+="M"+(c+m)+" "+(r+m)+"h1v1h-1z"}}}
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+t+' '+t+'" shape-rendering="crispEdges"><rect width="'+t+'" height="'+t+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>';
+  }
+  function field(card,x,row,label,value){
+    var f=el("div","f");f.style.left=x+"mm";f.style.top=(21+row*5.45)+"mm";f.style.maxWidth=(x>50?30:(x>40?18:27))+"mm";
+    f.appendChild(el("div","fl",label));f.appendChild(el("div","fv",value));
+    f.firstChild.style.position="static";f.lastChild.style.position="static";
+    card.appendChild(f);
+  }
+  function dress(c,cfg,isFront){
+    if(cfg.logo){c.style.setProperty("--logo","url('"+cfg.logo+"')")}
+    if(!cfg.showLogo&&isFront){c.classList.add("nologo")}
+    if(cfg.logo&&cfg.pattern){c.classList.add("pat")}
+  }
+  function wmark(card,cfg){if(cfg.sample){card.appendChild(el("div","wm","SAMPLE"))}}
+  function frontCard(s,cfg){
+    var c=el("div","card");dress(c,cfg,true);
+    c.appendChild(el("div","bt"));c.appendChild(el("div","bb"));
+    if(cfg.showLogo){c.appendChild(el("div","lg"))}
+    var name=cfg.inst.toUpperCase(),len=name.length;
+    var inst=el("div","inst",name);inst.style.fontSize=(cfg.showLogo?(len<=15?14:len<=19?12:len<=26?10:8.5):(len<=16?17:len<=22?14:len<=30?11:9))+"pt";c.appendChild(inst);
+    c.appendChild(el("div","ctitle","STUDENT'S IDENTITY CARD"));
+    c.appendChild(el("div","rule"));
+    var ph=el("div","photo");ph.appendChild(el("span",null,"PHOTO"));c.appendChild(ph);
+    field(c,26,0,"Surname",s.surname);
+    field(c,26,1,"Given Name",s.given);
+    field(c,26,2,"Nationality",cfg.nat);
+    field(c,43,2,"Sex",s.sex);
+    field(c,26,3,"Date of Issue",cfg.issue);
+    field(c,54,0,"Card No.",s.card);
+    field(c,54,1,"Reg No.",s.reg);
+    field(c,54,2,"Faculty",s.faculty);
+    field(c,54,3,"Course",s.course);
+    field(c,54,4,"Expiry Date",cfg.expiry);
+    if(cfg.sample){c.appendChild(el("div","sn","SAMPLE CARD - NOT A VALID IDENTITY DOCUMENT"))}
+    wmark(c,cfg);
+    return c;
+  }
+  function backCard(s,cfg){
+    var c=el("div","card");dress(c,cfg,false);
+    wmark(c,cfg);
+    var band=el("div","bandtop");
+    var l1=el("div","l1","This Card is a property of "+cfg.inst);if(!cfg.motto){l1.style.top="5.6mm"}band.appendChild(l1);
+    if(cfg.motto){band.appendChild(el("div","l2","\u201C"+cfg.motto+"\u201D"))}
+    c.appendChild(band);c.appendChild(el("div","bb"));
+    var qb=el("div","qrbox");
+    qb.innerHTML=qrSvg(JSON.stringify({name:s.qrName,reg:s.reg,course:s.course,sex:s.sexLong}));
+    c.appendChild(qb);
+    var ad=el("div","addr");
+    cfg.addr.forEach(function(l,i){ad.appendChild(el("div",null,l));ad.lastChild.style.position="static"});
+    c.appendChild(ad);
+    var sc=el("div","scan","Scan the QR code to record attendance");sc.style.top=(16.6+cfg.addr.length*3.6+0.8)+"mm";c.appendChild(sc);
+    c.appendChild(el("div","found","If found, please return to the above address"));
+    return c;
+  }
+
+  function make(){
+    if(typeof window.qrcode!=="function"){say("The QR tool did not load. Check your internet, reload the page and try again.","err");return}
+    var rows=parse($("data").value);
+    if(!rows.length){say("Paste your student list first.","err");return}
+    var cfg={inst:$("inst").value.trim()||"Sample University",motto:$("motto").value.trim(),nat:$("nat").value.trim()||"UGA",
+      issue:$("issue").value.trim(),expiry:$("expiry").value.trim(),sample:$("sample").checked,
+      logo:logoSrc,showLogo:$("showLogo").checked,pattern:$("usePattern").checked,
+      addr:$("addr").value.split("\n").map(function(l){return l.trim()}).filter(Boolean).slice(0,5)};
+    var backOnly=$("layout").value==="back";
+    var sheet=$("sheet");sheet.innerHTML="";
+    var made=0,skipped=[],warn=0,seen={},yr=new Date().getFullYear();
+    rows.forEach(function(r,i){
+      var surname=(r[0]||"").toUpperCase(),given=(r[1]||"").toUpperCase(),reg=r[3]||"";
+      if(!surname||!given||!reg){skipped.push(i+1);return}
+      if(seen[reg.toLowerCase()]){skipped.push(i+1);return}
+      seen[reg.toLowerCase()]=true;
+      var sx=/^m/i.test(r[2]||"")?"M":(/^f/i.test(r[2]||"")?"F":"");
+      if(!sx||!r[4]||!r[5]){warn++}
+      var s={surname:surname,given:given,sex:sx,reg:reg,faculty:(r[4]||"").toUpperCase(),course:r[5]||"",
+        card:r[6]||("STU-"+yr+"-"+("00000"+(made+1)).slice(-5)),qrName:title(surname)+" "+title(given),sexLong:sx==="M"?"Male":(sx==="F"?"Female":"")};
+      var pair=el("div","pair");
+      if(!backOnly){pair.appendChild(frontCard(s,cfg))}
+      pair.appendChild(backCard(s,cfg));
+      sheet.appendChild(pair);made++;
+    });
+    var msg=made+" card"+(made===1?"":"s")+" ready.";
+    if(skipped.length){msg+=" Skipped row(s) "+skipped.join(", ")+" (missing a name or reg number, or a duplicate reg number)."}
+    if(warn){msg+=" "+warn+" student(s) have no sex, faculty or course filled in."}
+    say(msg,made?(skipped.length||warn?"":"ok"):"err");
+    $("print").hidden=!made;
+    if(made){sheet.scrollIntoView({behavior:"smooth",block:"start"})}
+  }
+  $("logoFile").onchange=function(e){
+    var f=e.target.files&&e.target.files[0];if(!f){return}
+    var rd=new FileReader();
+    rd.onload=function(){logoSrc=String(rd.result);$("logoName").firstChild.textContent="Using your file: "+f.name+". "};
+    rd.readAsDataURL(f);
+  };
+  $("logoReset").onclick=function(e){e.preventDefault();logoSrc=LOGO_DEFAULT;$("logoFile").value="";$("logoName").firstChild.textContent="Using the Kumi University logo. "};
+  $("sample").onchange=function(){
+    if(!this.checked&&!confirm("Only turn off SAMPLE for cards that the university's ID office has approved. Turn it off?")){this.checked=true}
+  };
+  $("make").onclick=make;
+  $("load").onclick=function(){$("data").value=SAMPLE;say("Sample list loaded. Tap Make the cards.")};
+  $("print").onclick=function(){window.print()};
+  $("file").onchange=function(e){
+    var f=e.target.files&&e.target.files[0];if(!f){return}
+    var rd=new FileReader();
+    rd.onload=function(){$("data").value=String(rd.result||"");say("File loaded. Tap Make the cards.")};
+    rd.onerror=function(){say("Could not read that file.","err")};
+    rd.readAsText(f);
+  };
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>

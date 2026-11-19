@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2f6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--ink:#14213d;--muted:#5b6478;--line:#d5dbe6;--accent:#2446d8;--accent-ink:#fff;--ok:#1f8a5b;--warn:#b7791f;--bad:#c23b3b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--ok:#4cc38a;--warn:#e0b04a;--bad:#ff7b7b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--ok:#4cc38a;--warn:#e0b04a;--bad:#ff7b7b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;font-weight:800;margin:4px 0 2px}
+.sub{color:var(--muted);margin:0 0 14px}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+input[type=text],input[type=password],select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.scanner{position:relative;margin:14px 0;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1/1}
+video{width:100%;height:100%;object-fit:cover;display:block}
+.frame{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none}
+.idle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px}
+.idle[hidden]{display:none}
+.toast{min-height:52px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--muted);margin-bottom:14px}
+.toast.ok{border-left-color:var(--ok)}.toast.dup{border-left-color:var(--warn)}.toast.err{border-left-color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);flex:1}
+button.danger{color:var(--bad)}
+#xlsx{background:var(--ok);color:var(--accent-ink);border-color:var(--ok)}
+.count{display:flex;align-items:baseline;gap:8px;margin:18px 0 8px}
+.count b{font-size:2.4rem;font-weight:800;line-height:1}
+.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list li{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.list li:last-child{border-bottom:0}
+.list time{color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:16px;color:var(--muted)}
+.manual{margin-top:14px}
+[hidden]{display:none!important}
+.lp{display:flex;align-items:center;justify-content:center;padding:20px;min-height:90vh}
+.lcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;width:100%;max-width:380px;display:grid;gap:10px}
+.lcard h1{margin:0}
+.lcard .sub{margin:0 0 4px}
+#loginErr{margin:0;min-height:1.3em;color:var(--bad);font-size:.9rem}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.bar span{font-weight:600}
+.bar button,.homebtn{padding:7px 12px}
+.barbtns{display:flex;gap:8px}
+.homebtn{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;display:inline-block}
+.mh{font-size:1rem;font-weight:800;margin:0 0 10px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media (max-width:420px){.mgrid{grid-template-columns:1fr}}
+.manual>button{width:100%}
+.login{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.login summary{font-weight:600;cursor:pointer}
+.login label{margin-top:10px}
+.login .row{margin-top:10px}
+#syncState{margin:-6px 0 12px;font-size:.9rem;color:var(--muted)}
+#syncState.ok{color:var(--ok)}#syncState.err{color:var(--bad)}
+.manual .row{flex-wrap:nowrap}
+textarea{width:100%;margin-top:10px;min-height:110px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;padding:10px}
+</style>
+</head>
+<body>
+<section class="lp" id="loginPage" hidden>
+  <div class="lcard">
+    <h1>Attendance scanner</h1>
+    <p class="sub">Lecturer login</p>
+    <label for="lecName">Lecturer name</label>
+    <input type="text" id="lecName" autocomplete="name">
+    <label for="lecPin">Lecturer PIN</label>
+    <input type="password" id="lecPin" autocomplete="off">
+    <button class="primary" id="loginBtn">Log in</button>
+    <p id="loginErr" role="alert"></p>
+  </div>
+</section>
+<main id="app" hidden>
+  <h1>Attendance scanner</h1>
+  <p class="sub">Scan each student’s ID QR code to mark them present.</p>
+
+  <div class="bar"><span id="who"></span><span class="barbtns"><a class="homebtn" href="index.html">Home</a><button id="logout">Log out</button></span></div>
+  <p id="syncState"></p>
+
+  <label for="session">Class or session</label>
+  <input type="text" id="session" placeholder="e.g. CSC 201, Week 6">
+
+  <div class="scanner">
+    <video id="video" playsinline muted></video>
+    <div class="frame"></div>
+    <div class="idle" id="idle">Camera is off. Tap Start scanning.</div>
+  </div>
+  <canvas id="canvas" hidden></canvas>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Ready when you are.</div>
+
+  <div class="row">
+    <button class="primary" id="toggle">Start scanning</button>
+    <button id="xlsx">Download Excel</button>
+    <button id="copy">Copy CSV</button>
+    <button class="danger" id="clear">Clear list</button>
+  </div>
+
+  <div class="manual">
+    <h2 class="mh">Camera not working? Add a student manually</h2>
+    <div class="mgrid">
+      <div><label for="mName">Name</label><input type="text" id="mName" autocomplete="off"></div>
+      <div><label for="mReg">Registration number</label><input type="text" id="mReg" autocomplete="off"></div>
+      <div><label for="mCourse">Course</label><input type="text" id="mCourse" autocomplete="off"></div>
+      <div><label for="mSex">Sex</label><select id="mSex"><option value="">Select sex</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+    </div>
+    <button class="primary" id="manualAdd">Add student</button>
+  </div>
+
+  <div class="count"><b id="count">0</b><span>present</span></div>
+  <ul class="list" id="list"></ul>
+  <textarea id="csvOut" hidden readonly aria-label="CSV data"></textarea>
+</main>
+
+<script>
+(function(){
+  function load(urls,test){
+    var i=0;
+    (function next(){
+      if(test()||i>=urls.length){return}
+      var s=document.createElement("script");
+      s.src=urls[i++];
+      s.onload=function(){if(!test()){next()}};
+      s.onerror=next;
+      document.head.appendChild(s);
+    })();
+  }
+  load(["https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js","https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"],function(){return typeof window.jsQR==="function"});
+  load(["https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js","https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js","https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"],function(){return typeof window.ExcelJS!=="undefined"});
+})();
+</script>
+<script>
+(function(){
+  var KEY="attendance:v1";
+  var records=[], scanning=false, stream=null, lastSeen={}, rafId=null;
+  var $=function(id){return document.getElementById(id)};
+  var video=$("video"), canvas=$("canvas"), ctx=canvas.getContext("2d",{willReadFrequently:true});
+
+  function load(){
+    try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);records=d.records||[];$("session").value=d.session||""}}catch(e){}
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify({records:records,session:$("session").value}))}catch(e){}
+  }
+  function fmt(ts){return new Date(ts).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"})}
+  function say(msg,kind){var t=$("toast");t.textContent=msg;t.className="toast "+(kind||"")}
+  function beep(){
+    try{var a=new (window.AudioContext||window.webkitAudioContext)();var o=a.createOscillator();var g=a.createGain();
+    o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();setTimeout(function(){o.stop();a.close()},120)}catch(e){}
+    try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}
+  }
+  function render(){
+    $("count").textContent=records.length;
+    var ul=$("list");ul.innerHTML="";
+    if(!records.length){var li=document.createElement("li");li.className="empty";li.textContent="No one scanned yet. Scanned students appear here.";ul.appendChild(li);return}
+    records.slice().reverse().forEach(function(r){
+      var li=document.createElement("li");
+      var s=document.createElement("span");s.textContent=(r.name?r.name+", ":"")+r.reg+(r.course?", "+r.course:"")+(r.sex?", "+r.sex:"");
+      var t=document.createElement("time");t.textContent=fmt(r.ts);
+      li.appendChild(s);li.appendChild(t);ul.appendChild(li);
+    });
+  }
+  function tidy(v){return String(v||"").replace(/\s+/g," ").trim().slice(0,80)}
+  function parse(text){
+    text=String(text).trim();
+    try{var o=JSON.parse(text);if(o&&typeof o==="object"){return{name:tidy(o.name),reg:tidy(o.reg||o.regNo||o.reg_no||o.registration||o.id),course:tidy(o.course),sex:tidy(o.sex||o.gender)}}}catch(e){}
+    return{name:"",reg:tidy(text),course:"",sex:""};
+  }
+  function mark(raw){
+    var st=(raw&&typeof raw==="object")?{name:tidy(raw.name),reg:tidy(raw.reg),course:tidy(raw.course),sex:tidy(raw.sex)}:parse(raw),reg=st.reg;
+    if(!reg){return}
+    var now=Date.now();
+    if(lastSeen[reg]&&now-lastSeen[reg]<3000){return}
+    lastSeen[reg]=now;
+    var exists=records.some(function(r){return r.reg.toLowerCase()===reg.toLowerCase()});
+    if(exists){say((st.name||reg)+" is already marked present.","dup");return}
+    records.push({name:st.name,reg:reg,course:st.course,sex:st.sex,ts:now});save();render();beep();
+    queue.push({session:($("session").value||"").trim()||"Class session",name:st.name,reg:reg,course:st.course,sex:st.sex,ts:now});saveQ();flush();
+    say((st.name||reg)+" marked present at "+fmt(now)+".","ok");
+  }
+  var detector=null,busy=false;
+  try{if("BarcodeDetector" in window){detector=new BarcodeDetector({formats:["qr_code"]})}}catch(e){detector=null}
+  function tick(){
+    if(!scanning){return}
+    if(video.readyState===video.HAVE_ENOUGH_DATA){
+      if(detector){
+        if(!busy){busy=true;detector.detect(video).then(function(c){if(c&&c.length&&c[0].rawValue){mark(c[0].rawValue)}}).catch(function(){}).then(function(){busy=false})}
+      }else if(typeof jsQR==="function"){
+        var w=video.videoWidth,h=video.videoHeight;
+        canvas.width=w;canvas.height=h;ctx.drawImage(video,0,0,w,h);
+        var img=ctx.getImageData(0,0,w,h);
+        var code=jsQR(img.data,w,h,{inversionAttempts:"attemptBoth"});
+        if(code&&code.data){mark(code.data)}
+      }
+    }
+    rafId=requestAnimationFrame(tick);
+  }
+  async function start(){
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});
+      video.srcObject=stream;await video.play();
+      scanning=true;$("idle").hidden=true;$("toggle").textContent="Stop scanning";
+      var ready=detector||typeof jsQR==="function";
+      say(ready?"Scanning. Hold the ID steady about 20 cm away.":"Loading the scanner tool, please wait...");
+      if(!ready){
+        var tries=0;
+        var iv=setInterval(function(){
+          tries++;
+          if(typeof jsQR==="function"){clearInterval(iv);if(scanning){say("Scanning. Hold the ID steady about 20 cm away.")}}
+          else if(!scanning){clearInterval(iv)}
+          else if(tries>30){clearInterval(iv);say("The scanner tool could not load. Check your internet or try another network, then reload.","err")}
+        },500);
+      }
+      tick();
+    }catch(e){
+      say("Camera unavailable. Allow camera access in your browser, or use the manual field below.","err");
+    }
+  }
+  function stop(){
+    scanning=false;if(rafId){cancelAnimationFrame(rafId)}
+    if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}
+    video.srcObject=null;$("idle").hidden=false;$("toggle").textContent="Start scanning";
+    say("Scanner stopped.");
+  }
+  function csv(){
+    var s=$("session").value||"";
+    var q=function(v){return '"'+String(v||"").replace(/"/g,'""')+'"'};
+    var lines=["Session,Name,Registration number,Course,Sex,Time"];
+    records.forEach(function(r){lines.push([q(s),q(r.name),q(r.reg),q(r.course),q(r.sex),q(new Date(r.ts).toLocaleString())].join(","))});
+    return lines.join("\n");
+  }
+  $("toggle").onclick=function(){scanning?stop():start()};
+  $("session").oninput=save;
+  $("manualAdd").onclick=function(){
+    var st={name:$("mName").value.trim(),reg:$("mReg").value.trim(),course:$("mCourse").value.trim(),sex:$("mSex").value};
+    if(!st.name||!st.reg||!st.course||!st.sex){say("Fill in the name, registration number, course and sex.","err");return}
+    mark(st);
+    $("mName").value="";$("mReg").value="";$("mCourse").value="";$("mSex").value="";$("mName").focus();
+  };
+  $("copy").onclick=function(){
+    if(!records.length){say("Nothing to copy yet.","err");return}
+    var text=csv(),out=$("csvOut");out.value=text;out.hidden=false;
+    var done=function(){say("CSV copied. Paste it into Excel or Sheets.","ok")};
+    try{navigator.clipboard.writeText(text).then(done,function(){out.select();say("Select and copy the CSV below.")})}
+    catch(e){out.select();say("Select and copy the CSV below.")}
+  };
+  async function exportXlsx(){
+    if(!records.length){say("Nothing to export yet.","err");return}
+    if(typeof ExcelJS==="undefined"){say("The Excel tool did not load. Check your internet and reload the page.","err");return}
+    try{
+      var NAVY="FF1C2F6B",TINT="FFEEF1F6",LINEC="FFD5DBE6";
+      var side={style:"thin",color:{argb:LINEC}};
+      var box={top:side,left:side,bottom:side,right:side};
+      var wb=new ExcelJS.Workbook();wb.creator="Attendance";
+      var ws=wb.addWorksheet("Attendance",{views:[{state:"frozen",ySplit:6}],pageSetup:{orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0}});
+      ws.columns=[{width:7},{width:28},{width:24},{width:24},{width:11},{width:16}];
+      var session=($("session").value||"").trim()||"Class session";
+      var now=new Date();
+      var dateText=now.toLocaleDateString([],{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+      ws.mergeCells("A1:F1");
+      var t=ws.getCell("A1");t.value="Attendance Register";
+      t.font={name:"Calibri",size:18,bold:true,color:{argb:"FFFFFFFF"}};
+      t.fill={type:"pattern",pattern:"solid",fgColor:{argb:NAVY}};
+      t.alignment={vertical:"middle",horizontal:"left",indent:1};
+      ws.getRow(1).height=36;
+      var info=[["Session",session],["Lecturer",auth.name||"-"],["Date",dateText],["Total present",records.length]];
+      info.forEach(function(it,i){
+        var r=i+2;ws.mergeCells("A"+r+":B"+r);ws.mergeCells("C"+r+":F"+r);
+        var a=ws.getCell("A"+r),b=ws.getCell("C"+r);
+        a.value=it[0];b.value=it[1];
+        a.font={name:"Calibri",size:11,bold:true,color:{argb:NAVY}};
+        a.fill={type:"pattern",pattern:"solid",fgColor:{argb:TINT}};
+        b.font={name:"Calibri",size:11};b.alignment={horizontal:"left"};
+        a.border=box;b.border=box;
+      });
+      var hdr=["No.","Name","Registration number","Course","Sex","Time scanned"];
+      var hr=ws.getRow(6);hr.height=24;
+      hdr.forEach(function(h,i){
+        var c=hr.getCell(i+1);c.value=h;
+        c.font={name:"Calibri",size:11,bold:true,color:{argb:"FFFFFFFF"}};
+        c.fill={type:"pattern",pattern:"solid",fgColor:{argb:NAVY}};
+        c.alignment={vertical:"middle",horizontal:i===0||i>=4?"center":"left",indent:i===0||i>=4?0:1};
+        c.border=box;
+      });
+      var male=0,female=0;
+      records.forEach(function(r,i){
+        var sx=String(r.sex||"");
+        if(/^m/i.test(sx)){male++}else if(/^f/i.test(sx)){female++}
+        var row=ws.getRow(7+i);row.height=20;
+        var vals=[i+1,r.name||"",r.reg||"",r.course||"",sx,new Date(r.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})];
+        vals.forEach(function(v,k){
+          var c=row.getCell(k+1);c.value=v;
+          c.font={name:"Calibri",size:11};
+          c.alignment={vertical:"middle",horizontal:k===0||k>=4?"center":"left",indent:k===0||k>=4?0:1};
+          c.border=box;
+          if(i%2===1){c.fill={type:"pattern",pattern:"solid",fgColor:{argb:TINT}}}
+        });
+      });
+      var s0=7+records.length+1;
+      var sum=[["Summary",""],["Total present",records.length],["Male",male],["Female",female]];
+      sum.forEach(function(it,i){
+        var r=s0+i;ws.mergeCells("A"+r+":B"+r);
+        var a=ws.getCell("A"+r),b=ws.getCell("C"+r);
+        a.value=it[0];if(i>0){b.value=it[1];b.alignment={horizontal:"center"};b.border=box;b.font={name:"Calibri",size:11,bold:true}}
+        a.font={name:"Calibri",size:11,bold:true,color:{argb:i===0?"FFFFFFFF":NAVY}};
+        a.fill={type:"pattern",pattern:"solid",fgColor:{argb:i===0?NAVY:TINT}};
+        a.border=box;
+      });
+      var buf=await wb.xlsx.writeBuffer();
+      var blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var safe=session.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"Session";
+      var stamp=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+      var a2=document.createElement("a");
+      a2.href=URL.createObjectURL(blob);a2.download="Attendance_"+safe+"_"+stamp+".xlsx";
+      document.body.appendChild(a2);a2.click();a2.remove();
+      setTimeout(function(){URL.revokeObjectURL(a2.href)},5000);
+      say("Excel file downloaded. Open it from your Downloads.","ok");
+    }catch(e){
+      say("Could not create the Excel file. Try again, or use Copy CSV.","err");
+    }
+  }
+  $("xlsx").onclick=exportXlsx;
+  $("clear").onclick=function(){
+    if(!records.length){return}
+    if(confirm("Clear all "+records.length+" records for this session?")){records=[];lastSeen={};save();render();say("List cleared.")}
+  };
+  var DEFAULT_URL="https://script.google.com/macros/s/AKfycbwVmQ2voet8j7jjXVl2AgxOZNVTFXok4mBpduFmMYP07ImY9Qgz9r6-oDrttb9GMyKe/exec";
+  var CFG_KEY="attendance:cfg",Q_KEY="attendance:queue";
+  var cfg={url:"",pin:""},queue=[],syncing=false;
+  function loadCfg(){
+    try{var c=JSON.parse(localStorage.getItem(CFG_KEY)||"{}");cfg.url=c.url||DEFAULT_URL;cfg.pin=c.pin||"";queue=JSON.parse(localStorage.getItem(Q_KEY)||"[]")}
+    catch(e){cfg.url=DEFAULT_URL;queue=[]}
+  }
+  function saveQ(){try{localStorage.setItem(Q_KEY,JSON.stringify(queue))}catch(e){}}
+  function setSync(msg,kind){var s=$("syncState");s.textContent=msg;s.className=kind||""}
+  function syncStatus(){
+    if(!cfg.url||!cfg.pin){setSync("Not connected. Scans are saved on this device only.");return}
+    if(queue.length){setSync(queue.length+" scan(s) waiting to upload. They will send when you are online.")}
+    else{setSync("Connected. All scans are saved online.","ok")}
+  }
+  async function flush(){
+    if(syncing||!cfg.url||!cfg.pin||!queue.length){syncStatus();return}
+    syncing=true;
+    try{
+      while(queue.length){
+        var it=queue[0];
+        var res=await fetch(cfg.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"scan",pin:cfg.pin,session:it.session,name:it.name,reg:it.reg,course:it.course,sex:it.sex,ts:it.ts})});
+        var j=await res.json();
+        if(j&&j.error==="bad_pin"){cfg.pin="";try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg))}catch(e){}syncing=false;showLogin("Your PIN is no longer valid. Please log in again.");return}
+        if(j&&j.ok){queue.shift();saveQ()}else{break}
+      }
+    }catch(e){}
+    syncing=false;syncStatus();
+  }
+  var AUTH_KEY="attendance:auth",auth={name:""};
+  function showLogin(msg){
+    if(scanning){stop()}
+    $("app").hidden=true;$("loginPage").hidden=false;
+    $("loginErr").textContent=msg||"";$("lecName").value=auth.name||"";$("lecPin").value="";
+  }
+  function showApp(){
+    $("loginPage").hidden=true;$("app").hidden=false;
+    $("who").textContent="Signed in as "+(auth.name||"lecturer");
+    syncStatus();flush();
+  }
+  async function doLogin(){
+    var name=$("lecName").value.trim(),pin=$("lecPin").value.trim(),err=$("loginErr"),ok=false;
+    if(!name||!pin){err.textContent="Enter your name and PIN.";return}
+    err.textContent="Checking...";$("loginBtn").disabled=true;
+    try{
+      var r=await fetch(cfg.url+(cfg.url.indexOf("?")>-1?"&":"?")+"action=ping&pin="+encodeURIComponent(pin));
+      var j=await r.json();
+      if(j&&j.ok){ok=true}else{err.textContent=j&&j.error==="bad_pin"?"Wrong PIN. Try again.":"Could not log in. Try again."}
+    }catch(e){
+      if(cfg.pin&&cfg.pin===pin){ok=true}else{err.textContent="Could not reach the database. Check your internet and try again."}
+    }
+    $("loginBtn").disabled=false;
+    if(ok){
+      auth.name=name;cfg.pin=pin;
+      try{localStorage.setItem(AUTH_KEY,JSON.stringify(auth));localStorage.setItem(CFG_KEY,JSON.stringify(cfg))}catch(e){}
+      showApp();
+    }
+  }
+  $("loginBtn").onclick=doLogin;
+  $("lecPin").onkeydown=function(e){if(e.key==="Enter"){doLogin()}};
+  $("logout").onclick=function(){
+    if(queue.length&&!confirm(queue.length+" scan(s) have not uploaded yet. Log out anyway? They will upload when you log in again.")){return}
+    cfg.pin="";
+    try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));localStorage.removeItem(AUTH_KEY)}catch(e){}
+    showLogin("");
+  };
+  window.addEventListener("online",flush);
+  setInterval(flush,15000);
+  loadCfg();load();render();
+  try{auth=JSON.parse(localStorage.getItem(AUTH_KEY)||"{}")}catch(e){auth={name:""}}
+  if(auth.name&&cfg.pin){showApp()}else{showLogin("")}
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>

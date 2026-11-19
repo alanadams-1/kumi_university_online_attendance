@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2f6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--ink:#14213d;--muted:#5b6478;--line:#d5dbe6;--accent:#2446d8;--accent-ink:#fff;--navy:#1c2f6b;--bad:#c23b3b;--tint:#e8edff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--navy:#24378a;--bad:#ff7b7b;--tint:#222d55;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1524;--surface:#18203a;--ink:#e8ecf7;--muted:#9aa5c0;--line:#2b3555;--accent:#6c8cff;--accent-ink:#0f1524;--navy:#24378a;--bad:#ff7b7b;--tint:#222d55;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45;min-height:100vh}
+[hidden]{display:none!important}
+header{background:var(--navy);color:#fff;padding:22px 20px}
+header h1{margin:0;font-size:1.8rem;font-weight:800}
+header p{margin:2px 0 0;opacity:.85}
+main{max-width:900px;margin:0 auto;padding:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+.login{max-width:380px;margin:6vh auto 0;display:grid;gap:10px}
+.login h2{margin:0}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.err{margin:0;min-height:1.3em;color:var(--bad);font-size:.9rem}
+.hello{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 16px;flex-wrap:wrap}
+.hello h2{margin:0;font-size:1.3rem}
+.hello .sub{margin:0;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.tile{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;transition:transform .15s,border-color .15s}
+.tile:hover{transform:translateY(-3px);border-color:var(--accent)}
+.ic{width:52px;height:52px;border-radius:14px;background:var(--tint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.ic svg{width:28px;height:28px}
+.tile h2{margin:0 0 4px;font-size:1.2rem}
+.tile p{margin:0;color:var(--muted)}
+.more{margin-top:18px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.more a{color:var(--accent);font-weight:600;text-decoration:none}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px}
+</style>
+</head>
+<body>
+<header><h1>Attendance</h1><p>A Smart QR Code Attendance System</p></header>
+<main>
+  <section id="login" class="card login" hidden>
+    <h2>Lecturer login</h2>
+    <p class="sub" style="margin:0;color:var(--muted)">Log in once, then choose what you want to do.</p>
+    <div><label for="name">Lecturer name</label><input type="text" id="name" autocomplete="name"></div>
+    <div><label for="pin">Lecturer PIN</label><input type="password" id="pin" autocomplete="off"></div>
+    <button class="primary" id="go">Log in</button>
+    <p class="err" id="err" role="alert"></p>
+  </section>
+
+  <section id="home" hidden>
+    <div class="hello">
+      <div><h2 id="hi"></h2><p class="sub">What would you like to do?</p></div>
+      <button id="logout">Log out</button>
+    </div>
+    <div class="tiles">
+      <a class="tile" href="scanner.html">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></svg></div>
+        <h2>Take attendance</h2><p>Scan student ID QR codes with your phone camera, or add a student by hand.</p>
+      </a>
+      <a class="tile" href="dashboard.html">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="6" width="4" height="14"/><rect x="16" y="3" width="4" height="17"/></svg></div>
+        <h2>Live dashboard</h2><p>Watch attendance update live, with counts by sex and course.</p>
+      </a>
+      <a class="tile" href="card-maker.html">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 20h.01M20 14h.01"/></svg></div>
+        <h2>Make ID cards</h2><p>Turn a student list into printable ID cards with a QR code on the back.</p>
+      </a>
+    </div>
+    <div class="more"><a href="sample-ids.html">Sample ID cards for testing</a><button id="install" hidden>Install as an app</button></div>
+    <p class="sub" style="color:var(--muted);margin:12px 0 0;font-size:.9rem">On an iPhone: open this page in Safari, tap Share, then Add to Home Screen.</p>
+  </section>
+</main>
+<footer>Kumi University Student Innovation Project Exhibition 2026/2027</footer>
+
+<script>
+(function(){
+  var URL_="https://script.google.com/macros/s/AKfycbwVmQ2voet8j7jjXVl2AgxOZNVTFXok4mBpduFmMYP07ImY9Qgz9r6-oDrttb9GMyKe/exec";
+  var CFG_KEY="attendance:cfg",AUTH_KEY="attendance:auth",Q_KEY="attendance:queue";
+  var $=function(id){return document.getElementById(id)};
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"{}")||{}}catch(e){return {}}}
+  var cfg=read(CFG_KEY),auth=read(AUTH_KEY);
+
+  function showLogin(msg){
+    $("home").hidden=true;$("login").hidden=false;
+    $("err").textContent=msg||"";$("name").value=auth.name||"";$("pin").value="";
+  }
+  function showHome(){
+    $("login").hidden=true;$("home").hidden=false;
+    $("hi").textContent="Welcome, "+(auth.name||"lecturer");
+  }
+  async function login(){
+    var name=$("name").value.trim(),pin=$("pin").value.trim(),ok=false;
+    if(!name||!pin){$("err").textContent="Enter your name and PIN.";return}
+    $("err").textContent="Checking...";$("go").disabled=true;
+    try{
+      var r=await fetch(URL_+"?action=ping&pin="+encodeURIComponent(pin));
+      var j=await r.json();
+      if(j&&j.ok){ok=true}else{$("err").textContent=j&&j.error==="bad_pin"?"Wrong PIN. Try again.":"Could not log in. Try again."}
+    }catch(e){
+      if(cfg.pin&&cfg.pin===pin){ok=true}else{$("err").textContent="Could not reach the database. Check your internet and try again."}
+    }
+    $("go").disabled=false;
+    if(ok){
+      auth={name:name};cfg={url:URL_,pin:pin};
+      try{localStorage.setItem(AUTH_KEY,JSON.stringify(auth));localStorage.setItem(CFG_KEY,JSON.stringify(cfg))}catch(e){}
+      showHome();
+    }
+  }
+  $("go").onclick=login;
+  $("pin").onkeydown=function(e){if(e.key==="Enter"){login()}};
+  $("logout").onclick=function(){
+    var q=[];try{q=JSON.parse(localStorage.getItem(Q_KEY)||"[]")||[]}catch(e){}
+    if(q.length&&!confirm(q.length+" scan(s) have not uploaded yet. Log out anyway? They will upload when you log in again.")){return}
+    cfg.pin="";
+    try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));localStorage.removeItem(AUTH_KEY);localStorage.removeItem("dash:pin")}catch(e){}
+    auth={};showLogin("");
+  };
+  var dp=null;
+  window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;$("install").hidden=false});
+  window.addEventListener("appinstalled",function(){$("install").hidden=true;dp=null});
+  $("install").onclick=async function(){if(!dp){return}dp.prompt();try{await dp.userChoice}catch(e){}dp=null;$("install").hidden=true};
+  if(auth.name&&cfg.pin){showHome()}else{showLogin("")}
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>
